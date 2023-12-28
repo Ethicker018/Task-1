@@ -1,0 +1,140 @@
+
+#!/bin/bash
+
+# Function to display command manual
+display_manual() {
+    echo "internsctl - Custom Linux Command"
+    echo "Version: v0.1.0"
+    echo
+    echo "DESCRIPTION:"
+    echo "  A custom Linux command for specific operations."
+    echo
+    echo "USAGE:"
+    echo "  internsctl [OPTIONS]"
+    echo
+    echo "OPTIONS:"
+    echo "  --help           Display this help message"
+    echo "  --version        Display the command version"
+    echo "  user create      Create a new user with the provided username"
+    echo "  user list        List all regular users on the server"
+    echo "  user list --sudo-only List all users with sudo permissions"
+    echo "  file getinfo     Get information about a file"
+    echo "  cpu getinfo      Get CPU information (similar to lscpu)"
+    echo "  memory getinfo   Get memory information (similar to free)"
+}
+
+# Function to display command help
+display_help() {
+    echo "Usage: internsctl [OPTIONS]"
+    echo "  Perform specific operations using internsctl."
+    echo
+    echo "Options:"
+    echo "  --help           Display this help message"
+    echo "  --version        Display the command version"
+    echo "  user create      Create a new user with the provided username"
+    echo "  user list        List all regular users on the server"
+    echo "  user list --sudo-only List all users with sudo permissions"
+    echo "  file getinfo     Get information about a file"
+    echo "  cpu getinfo      Get CPU information (similar to lscpu)"
+    echo "  memory getinfo   Get memory information (similar to free)"
+    echo
+    echo "Examples:"
+    echo "  internsctl --help"
+    echo "  internsctl --version"
+    echo "  internsctl user create <username>"
+    echo "  internsctl user list"
+    echo "  internsctl user list --sudo-only"
+    echo "  internsctl file getinfo hello.txt"
+    echo "  internsctl file getinfo --size hello.txt"
+    echo "  internsctl file getinfo --permissions hello.txt"
+    echo "  internsctl file getinfo --owner hello.txt"
+    echo "  internsctl file getinfo --last-modified hello.txt"
+    echo "  internsctl cpu getinfo"
+    echo "  internsctl memory getinfo"
+}
+
+# Function to display command version
+display_version() {
+    echo "internsctl v0.1.0"
+}
+
+# Function to create a new user
+create_user() {
+    if [ -z "$2" ]; then
+        echo "Error: Please provide a username. Usage: internsctl user create <username>"
+    else
+        sudo adduser "$2"
+    fi
+}
+
+# Function to list all regular users
+list_users() {
+    cut -d: -f1 /etc/passwd
+}
+
+# Function to list users with sudo permissions
+list_sudo_users() {
+    getent group sudo | cut -d: -f4 | tr ',' '\n'
+}
+
+# Function to get file information
+get_file_info() {
+    local file="$2"
+    local option="$3"
+
+    if [ -z "$file" ]; then
+        echo "Error: Please provide a file name. Usage: internsctl file getinfo <file-name>"
+        return
+    fi
+
+    case "$option" in
+        --size)
+            stat --format=%s "$file"
+            ;;
+        --permissions)
+            stat --format=%A "$file"
+            ;;
+        --owner)
+            stat --format=%U "$file"
+            ;;
+        --last-modified)
+            stat --format=%y "$file"
+            ;;
+        *)
+            echo "Error: Unknown option. Use 'internsctl file getinfo --help' for usage information."
+            ;;
+    esac
+}
+
+# Function to get CPU information
+get_cpu_info() {
+    lscpu
+}
+
+# Function to get memory information
+get_memory_info() {
+    free
+}
+
+# Main script logic
+if [ "$1" == "--help" ]; then
+    display_help
+elif [ "$1" == "--version" ]; then
+    display_version
+elif [ "$1" == "man" ]; then
+    display_manual
+elif [ "$1" == "user" ] && [ "$2" == "create" ]; then
+    create_user "$@"
+elif [ "$1" == "user" ] && [ "$2" == "list" ]; then
+    list_users
+elif [ "$1" == "user" ] && [ "$2" == "list" ] && [ "$3" == "--sudo-only" ]; then
+    list_sudo_users
+elif [ "$1" == "file" ] && [ "$2" == "getinfo" ]; then
+    get_file_info "$@"
+elif [ "$1" == "cpu" ] && [ "$2" == "getinfo" ]; then
+    get_cpu_info
+elif [ "$1" == "memory" ] && [ "$2" == "getinfo" ]; then
+    get_memory_info
+else
+    echo "Error: Unknown option. Use 'internsctl --help' for usage information."
+fi
